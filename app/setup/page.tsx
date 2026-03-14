@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { AppShell } from "@/components/app-shell/app-shell"
 import { buttonVariants } from "@/components/ui/button-variants"
 import {
@@ -16,17 +17,25 @@ function getSearchParamValue(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined
 }
 
+function isRedirectError(e: unknown): boolean {
+  if (e instanceof Error) return e.message === "NEXT_REDIRECT"
+  return (e as { digest?: string })?.digest?.includes?.("REDIRECT") === true
+}
+
 type SetupPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function SetupPage({ searchParams }: SetupPageProps) {
-  const user = await requireAuthenticatedUser("/setup")
-  const snapshot = await getAccountSnapshot(user.id)
-  const params = searchParams ? await searchParams : {}
-  const justCreated = getSearchParamValue(params.created) === "1"
+export const dynamic = "force-dynamic"
 
-  if (!snapshot?.account) {
+export default async function SetupPage({ searchParams }: SetupPageProps) {
+  try {
+    const user = await requireAuthenticatedUser("/setup")
+    const snapshot = await getAccountSnapshot(user.id)
+    const params = searchParams ? await searchParams : {}
+    const justCreated = getSearchParamValue(params.created) === "1"
+
+    if (!snapshot?.account) {
     return (
       <main className="min-h-screen px-6 py-8 sm:px-10 lg:px-14 lg:py-12">
         <div className="mx-auto max-w-3xl rounded-[32px] border border-line bg-surface px-8 py-10 shadow-[0_22px_70px_rgba(28,43,38,0.08)]">
@@ -186,4 +195,9 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
       </div>
     </AppShell>
   )
+  } catch (e) {
+    if (isRedirectError(e)) throw e
+    console.error("[setup] page error:", e)
+    redirect("/sign-in?next=/setup&error=server")
+  }
 }

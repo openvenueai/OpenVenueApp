@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { AppShell } from "@/components/app-shell/app-shell"
 import { PriorityRail } from "@/components/dashboard/priority-rail"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,11 @@ import { getDashboardData } from "@/lib/dashboard/queries"
 import { formatDate } from "@/lib/formatting"
 import { formatWorkspaceStage } from "@/lib/leads/constants"
 
+function isRedirectError(e: unknown): boolean {
+  if (e instanceof Error) return e.message === "NEXT_REDIRECT"
+  return (e as { digest?: string })?.digest?.includes?.("REDIRECT") === true
+}
+
 function formatCurrencyCents(cents: number) {
   if (cents === 0) return "—"
   return new Intl.NumberFormat("en-US", {
@@ -26,11 +32,14 @@ function formatCurrencyCents(cents: number) {
   }).format(cents / 100)
 }
 
-export default async function DashboardPage() {
-  const user = await requireAuthenticatedUser("/dashboard")
-  const snapshot = await getAccountSnapshot(user.id)
+export const dynamic = "force-dynamic"
 
-  if (!snapshot?.account) {
+export default async function DashboardPage() {
+  try {
+    const user = await requireAuthenticatedUser("/dashboard")
+    const snapshot = await getAccountSnapshot(user.id)
+
+    if (!snapshot?.account) {
     return (
       <main className="min-h-screen px-6 py-8 sm:px-10 lg:px-14 lg:py-12">
         <div className="mx-auto max-w-3xl rounded-[32px] border border-line bg-surface px-8 py-10 shadow-[0_22px_70px_rgba(28,43,38,0.08)]">
@@ -259,4 +268,9 @@ export default async function DashboardPage() {
       </div>
     </AppShell>
   )
+  } catch (e) {
+    if (isRedirectError(e)) throw e
+    console.error("[dashboard] page error:", e)
+    redirect("/sign-in?next=/dashboard&error=server")
+  }
 }

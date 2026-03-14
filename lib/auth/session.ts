@@ -4,29 +4,37 @@ import { buildSignInRedirectPath } from "@/lib/auth/paths"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export const getCurrentUser = cache(async () => {
-  const supabase = await createServerSupabaseClient()
+  try {
+    const supabase = await createServerSupabaseClient()
 
-  if (!supabase) {
+    if (!supabase) {
+      return null
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    return user
+  } catch {
     return null
   }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  return user
 })
 
 export const getCurrentClaims = cache(async () => {
-  const supabase = await createServerSupabaseClient()
+  try {
+    const supabase = await createServerSupabaseClient()
 
-  if (!supabase) {
+    if (!supabase) {
+      return null
+    }
+
+    const { data } = await supabase.auth.getClaims()
+
+    return data?.claims ?? null
+  } catch {
     return null
   }
-
-  const { data } = await supabase.auth.getClaims()
-
-  return data?.claims ?? null
 })
 
 export async function requireAuthenticatedUser(nextPath?: string) {
