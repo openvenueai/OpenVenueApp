@@ -7,9 +7,10 @@ type StepWelcomeProps = {
   description?: string
   onNext: () => void
   isPending: boolean
+  error?: string | null
 }
 
-export function StepWelcome({ title, description, onNext, isPending }: StepWelcomeProps) {
+export function StepWelcome({ title, description, onNext, isPending, error }: StepWelcomeProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -20,6 +21,11 @@ export function StepWelcome({ title, description, onNext, isPending }: StepWelco
           <p className="text-base leading-7 text-muted-foreground">{description}</p>
         )}
       </div>
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={isPending}>
           Get started

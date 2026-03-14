@@ -7,6 +7,7 @@ type StepCompleteProps = {
   description?: string
   onOpenWorkspace: () => void
   isPending: boolean
+  error?: string | null
 }
 
 export function StepComplete({
@@ -14,6 +15,7 @@ export function StepComplete({
   description,
   onOpenWorkspace,
   isPending,
+  error,
 }: StepCompleteProps) {
   return (
     <div className="space-y-8">
@@ -25,6 +27,11 @@ export function StepComplete({
           <p className="text-base leading-7 text-muted-foreground">{description}</p>
         )}
       </div>
+      {error && (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end">
         <Button onClick={onOpenWorkspace} disabled={isPending}>
           Open workspace

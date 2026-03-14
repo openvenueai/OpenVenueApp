@@ -65,8 +65,10 @@ export function OnboardingStepView({
   const handleComplete = () => {
     setError(null)
     startTransition(async () => {
-      await completeOnboarding(sessionId)
-      // completeOnboarding redirects on success; if it throws we stay and could set error
+      const result = await completeOnboarding(sessionId)
+      if (result && result.success === false && result.error) {
+        setError(result.error)
+      }
     })
   }
 
@@ -81,6 +83,7 @@ export function OnboardingStepView({
         description={step.description}
         onNext={() => handleNext()}
         isPending={isPending}
+        error={error}
       />
     )
   }
@@ -139,6 +142,7 @@ export function OnboardingStepView({
         description={step.description}
         onOpenWorkspace={handleComplete}
         isPending={isPending}
+        error={error}
       />
     )
   }

@@ -109,92 +109,115 @@ export async function getOrCreateOnboardingSession(): Promise<OnboardingSessionR
   }
 }
 
+function toFriendlyDbError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  if (msg.includes("DATABASE_URL") || msg.includes("not configured")) {
+    return "Database is not configured. Please add DATABASE_URL in your deployment environment."
+  }
+  if (msg.includes("relation") && msg.includes("does not exist")) {
+    return "Onboarding setup is not complete. Run the onboarding_sessions migration (RUN #4) in Supabase SQL Editor."
+  }
+  return "A temporary error occurred. Please try again."
+}
+
 export async function saveOnboardingStep(
   sessionId: string,
   stepId: string,
   value: unknown,
 ): Promise<{ success: boolean; error?: string; nextStepId?: string | null }> {
-  const user = await requireAuthenticatedUser("/onboarding")
-  const db = getDb()
+  try {
+    const user = await requireAuthenticatedUser("/onboarding")
+    const db = getDb()
 
-  const rows = await db
-    .select()
-    .from(onboardingSessions)
-    .where(eq(onboardingSessions.id, sessionId))
-    .limit(1)
+    const rows = await db
+      .select()
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.id, sessionId))
+      .limit(1)
 
-  const session = rows[0]
-  if (!session || session.userId !== user.id || session.status !== "in_progress") {
-    return { success: false, error: "Session not found or not in progress." }
-  }
+    const session = rows[0]
+    if (!session || session.userId !== user.id || session.status !== "in_progress") {
+      return { success: false, error: "Session not found or not in progress." }
+    }
 
-  const step = getStepById(stepId)
-  if (!step) return { success: false, error: "Unknown step." }
+    const step = getStepById(stepId)
+    if (!step) return { success: false, error: "Unknown step." }
 
-  const answers = normalizeAnswers(session.answersJson)
-  const field = step.field
-  const newAnswers = { ...answers }
-  if (field) {
-    ;(newAnswers as Record<string, unknown>)[field] = value
-  }
+    const answers = normalizeAnswers(session.answersJson)
+    const field = step.field
+    const newAnswers = { ...answers }
+    if (field) {
+      ;(newAnswers as Record<string, unknown>)[field] = value
+    }
 
-  const validationError = validateStep(step, value, newAnswers)
-  if (validationError) return { success: false, error: validationError }
+    const validationError = validateStep(step, value, newAnswers)
+    if (validationError) return { success: false, error: validationError }
 
-  const nextStepId = getNextStepId(stepId, newAnswers)
-  const now = new Date()
+    const nextStepId = getNextStepId(stepId, newAnswers)
+    const now = new Date()
 
-  await db
-    .update(onboardingSessions)
-    .set({
-      answersJson: newAnswers,
-      currentStepId: nextStepId ?? stepId,
-      updatedAt: now,
+    await db
+      .update(onboardingSessions)
+      .set({
+        answersJson: newAnswers,
+        currentStepId: nextStepId ?? stepId,
+        updatedAt: now,
+      })
+      .where(eq(onboardingSessions.id, sessionId))
+
+    await db.insert(onboardingEvents).values({
+      sessionId,
+      userId: user.id,
+      stepId,
+      eventType: "step_completed",
+      valueJson: field ? { [field]: value } : {},
     })
-    .where(eq(onboardingSessions.id, sessionId))
 
-  await db.insert(onboardingEvents).values({
-    sessionId,
-    userId: user.id,
-    stepId,
-    eventType: "step_completed",
-    valueJson: field ? { [field]: value } : {},
-  })
-
-  return { success: true, nextStepId }
+    return { success: true, nextStepId }
+  } catch (err) {
+    if (isRedirectError(err)) throw err
+    console.error("[saveOnboardingStep]", err)
+    return { success: false, error: toFriendlyDbError(err) }
+  }
 }
 
 export async function goBackOnboardingStep(
   sessionId: string,
   currentStepId: string,
 ): Promise<{ success: boolean; error?: string; previousStepId?: string | null }> {
-  const user = await requireAuthenticatedUser("/onboarding")
-  const db = getDb()
+  try {
+    const user = await requireAuthenticatedUser("/onboarding")
+    const db = getDb()
 
-  const rows = await db
-    .select()
-    .from(onboardingSessions)
-    .where(eq(onboardingSessions.id, sessionId))
-    .limit(1)
+    const rows = await db
+      .select()
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.id, sessionId))
+      .limit(1)
 
-  const session = rows[0]
-  if (!session || session.userId !== user.id || session.status !== "in_progress") {
-    return { success: false, error: "Session not found or not in progress." }
+    const session = rows[0]
+    if (!session || session.userId !== user.id || session.status !== "in_progress") {
+      return { success: false, error: "Session not found or not in progress." }
+    }
+
+    const answers = normalizeAnswers(session.answersJson)
+    const previousStepId = getPreviousStepId(currentStepId, answers)
+    if (!previousStepId) return { success: true, previousStepId: null }
+
+    await db
+      .update(onboardingSessions)
+      .set({
+        currentStepId: previousStepId,
+        updatedAt: new Date(),
+      })
+      .where(eq(onboardingSessions.id, sessionId))
+
+    return { success: true, previousStepId }
+  } catch (err) {
+    if (isRedirectError(err)) throw err
+    console.error("[goBackOnboardingStep]", err)
+    return { success: false, error: toFriendlyDbError(err) }
   }
-
-  const answers = normalizeAnswers(session.answersJson)
-  const previousStepId = getPreviousStepId(currentStepId, answers)
-  if (!previousStepId) return { success: true, previousStepId: null }
-
-  await db
-    .update(onboardingSessions)
-    .set({
-      currentStepId: previousStepId,
-      updatedAt: new Date(),
-    })
-    .where(eq(onboardingSessions.id, sessionId))
-
-  return { success: true, previousStepId }
 }
 
 export async function recordOnboardingEvent(
@@ -245,11 +268,12 @@ function buildDisplayName(firstName: string | null, lastName: string | null, ema
   return email.split("@")[0] ?? "OpenVenue user"
 }
 
-export async function completeOnboarding(sessionId: string): Promise<{ success: boolean; error?: string }> {
-  const user = await requireAuthenticatedUser("/onboarding")
-  const db = getDb()
+export async function completeOnboarding(sessionId: string): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const user = await requireAuthenticatedUser("/onboarding")
+    const db = getDb()
 
-  const rows = await db
+    const rows = await db
     .select()
     .from(onboardingSessions)
     .where(eq(onboardingSessions.id, sessionId))
@@ -400,5 +424,10 @@ export async function completeOnboarding(sessionId: string): Promise<{ success: 
     })
   })
 
-  redirect("/setup?created=1")
+    redirect("/setup?created=1")
+  } catch (err) {
+    if (isRedirectError(err)) throw err
+    console.error("[completeOnboarding]", err)
+    return { success: false, error: toFriendlyDbError(err) }
+  }
 }
