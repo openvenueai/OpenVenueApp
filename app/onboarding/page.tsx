@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation"
-import { OnboardingForm } from "@/components/onboarding/onboarding-form"
 import { getAccountSnapshot } from "@/lib/account-context"
+import { getOrCreateOnboardingSession } from "@/lib/onboarding/session-actions"
 import { requireAuthenticatedUser } from "@/lib/auth/session"
+import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps"
 
-export default async function OnboardingPage() {
+export default async function OnboardingIndexPage() {
   const user = await requireAuthenticatedUser("/onboarding")
   const snapshot = await getAccountSnapshot(user.id)
 
@@ -11,11 +12,11 @@ export default async function OnboardingPage() {
     redirect("/setup")
   }
 
-  return (
-    <main className="min-h-screen px-6 py-8 sm:px-10 lg:px-14 lg:py-12">
-      <div className="mx-auto w-full max-w-7xl">
-        <OnboardingForm userEmail={user.email} />
-      </div>
-    </main>
-  )
+  const session = await getOrCreateOnboardingSession()
+  if (!session) {
+    redirect("/setup")
+  }
+
+  const stepId = session.currentStepId || ONBOARDING_STEP_IDS.STEP_WELCOME
+  redirect(`/onboarding/${stepId}`)
 }

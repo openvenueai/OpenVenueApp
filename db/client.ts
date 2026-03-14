@@ -29,6 +29,10 @@ export function createDbClient(databaseUrl = getDatabaseUrl()) {
   const client = postgres(databaseUrl, {
     max: 1,
     prepare: false,
+    ssl: process.env.NODE_ENV === "production" ? "require" : false,
+    // Serverless: allow time for cold start + pooler handshake
+    connect_timeout: 15,
+    idle_timeout: 0,
   })
 
   return {

@@ -9,5 +9,5 @@ test("loads the OpenVenue starter shell", async ({ page }) => {
     }),
   ).toBeVisible();
 
-  await expect(page.getByText(/phase 1 in progress/i)).toBeVisible();
+  await expect(page.getByText(/phase 3 in progress/i)).toBeVisible();
 });

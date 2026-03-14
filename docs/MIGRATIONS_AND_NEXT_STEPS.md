@@ -6,7 +6,10 @@ Follow these in order.
 
 ## Part 1: Apply the new migrations in Supabase
 
-You have **three new migrations** (0001, 0002, 0003). Apply them **in this order**.
+**If your Supabase database is brand new**, you must run the **initial migration first** (`db/migrations/0000_clumsy_pandemic.sql`). It creates the base tables: `accounts`, `profiles`, `venues`, `account_memberships`, `contacts`, `event_workspaces`, `tasks`, `notes`, etc. Without it, onboarding and the app will fail with errors like “We could not read your account profile.”
+
+- **First time setup:** Run `0000_clumsy_pandemic.sql` in the Supabase SQL Editor (copy the file from the repo), then run 0001, 0002, 0003 below.
+- **Already have the base schema:** Run only the three new migrations (0001, 0002, 0003) in this order.
 
 ### Option A – Supabase Dashboard (recommended if you use the web UI)
 
