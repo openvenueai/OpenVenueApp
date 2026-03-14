@@ -187,10 +187,14 @@ export async function startOnboardingAction(
       .from(profiles)
       .where(eq(profiles.authUserId, user.id))
       .limit(1)
-  } catch {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error("[onboarding] profile lookup failed:", message)
+    // Show the actual error so we can fix (e.g. connection, missing table, permission)
+    const detail = message ? ` (${message})` : ""
     return {
       status: "error",
-      message: "We could not read your account profile. Try again in a moment.",
+      message: `We could not read your account profile. Try again in a moment.${detail}`,
     }
   }
 
