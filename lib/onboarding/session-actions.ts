@@ -18,7 +18,7 @@ import {
   venueSpaces,
   venues,
 } from "@/db/schema"
-import { requireAuthenticatedUser } from "@/lib/auth/session"
+import { getCurrentUser, requireAuthenticatedUser } from "@/lib/auth/session"
 import { buildSetupChecklist } from "@/lib/onboarding/checklist"
 import {
   getNextStepId,
@@ -126,7 +126,10 @@ export async function saveOnboardingStep(
   value: unknown,
 ): Promise<{ success: boolean; error?: string; nextStepId?: string | null }> {
   try {
-    const user = await requireAuthenticatedUser("/onboarding")
+    const user = await getCurrentUser()
+    if (!user) {
+      return { success: false, error: "Your session expired. Please sign in again." }
+    }
     const db = getDb()
 
     const rows = await db
@@ -186,7 +189,10 @@ export async function goBackOnboardingStep(
   currentStepId: string,
 ): Promise<{ success: boolean; error?: string; previousStepId?: string | null }> {
   try {
-    const user = await requireAuthenticatedUser("/onboarding")
+    const user = await getCurrentUser()
+    if (!user) {
+      return { success: false, error: "Your session expired. Please sign in again." }
+    }
     const db = getDb()
 
     const rows = await db
@@ -226,25 +232,30 @@ export async function recordOnboardingEvent(
   eventType: string,
   valueJson?: Record<string, unknown>,
 ): Promise<{ success: boolean }> {
-  const user = await requireAuthenticatedUser("/onboarding")
-  const db = getDb()
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { success: false }
+    const db = getDb()
 
-  const rows = await db
-    .select({ userId: onboardingSessions.userId })
-    .from(onboardingSessions)
-    .where(eq(onboardingSessions.id, sessionId))
-    .limit(1)
+    const rows = await db
+      .select({ userId: onboardingSessions.userId })
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.id, sessionId))
+      .limit(1)
 
-  if (!rows[0] || rows[0].userId !== user.id) return { success: false }
+    if (!rows[0] || rows[0].userId !== user.id) return { success: false }
 
-  await db.insert(onboardingEvents).values({
-    sessionId,
-    userId: user.id,
-    stepId,
-    eventType,
-    valueJson: valueJson ?? {},
-  })
-  return { success: true }
+    await db.insert(onboardingEvents).values({
+      sessionId,
+      userId: user.id,
+      stepId,
+      eventType,
+      valueJson: valueJson ?? {},
+    })
+    return { success: true }
+  } catch {
+    return { success: false }
+  }
 }
 
 async function getUniqueAccountSlug(name: string): Promise<string> {
@@ -270,7 +281,10 @@ function buildDisplayName(firstName: string | null, lastName: string | null, ema
 
 export async function completeOnboarding(sessionId: string): Promise<{ success?: boolean; error?: string }> {
   try {
-    const user = await requireAuthenticatedUser("/onboarding")
+    const user = await getCurrentUser()
+    if (!user) {
+      return { success: false, error: "Your session expired. Please sign in again." }
+    }
     const db = getDb()
 
     const rows = await db
