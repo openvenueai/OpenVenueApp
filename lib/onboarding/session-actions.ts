@@ -2,6 +2,11 @@
 
 import { eq, like } from "drizzle-orm"
 import { redirect } from "next/navigation"
+
+function isRedirectError(e: unknown): boolean {
+  if (e instanceof Error) return e.message === "NEXT_REDIRECT"
+  return (e as { digest?: string })?.digest?.includes?.("REDIRECT") === true
+}
 import { getDb } from "@/db/client"
 import {
   accountMemberships,
@@ -36,65 +41,71 @@ function normalizeAnswers(raw: unknown): OnboardingAnswers {
 }
 
 export async function getOrCreateOnboardingSession(): Promise<OnboardingSessionRecord | null> {
-  const user = await requireAuthenticatedUser("/onboarding")
-  const db = getDb()
+  try {
+    const user = await requireAuthenticatedUser("/onboarding")
+    const db = getDb()
 
-  const existing = await db
-    .select()
-    .from(onboardingSessions)
-    .where(eq(onboardingSessions.userId, user.id))
-    .limit(1)
+    const existing = await db
+      .select()
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.userId, user.id))
+      .limit(1)
 
-  const row = existing[0]
-  if (row && row.status === "in_progress") {
-    return {
-      id: row.id,
-      userId: row.userId,
-      accountId: row.accountId,
-      currentStepId: row.currentStepId,
-      answers: normalizeAnswers(row.answersJson),
-      status: row.status as "in_progress" | "completed" | "abandoned",
-      version: row.version,
-      startedAt: row.startedAt,
-      updatedAt: row.updatedAt,
-      completedAt: row.completedAt,
+    const row = existing[0]
+    if (row && row.status === "in_progress") {
+      return {
+        id: row.id,
+        userId: row.userId,
+        accountId: row.accountId,
+        currentStepId: row.currentStepId,
+        answers: normalizeAnswers(row.answersJson),
+        status: row.status as "in_progress" | "completed" | "abandoned",
+        version: row.version,
+        startedAt: row.startedAt,
+        updatedAt: row.updatedAt,
+        completedAt: row.completedAt,
+      }
     }
-  }
 
-  if (row && row.status === "completed") {
+    if (row && row.status === "completed") {
+      return null
+    }
+
+    const id = randomUUID()
+    await db.insert(onboardingSessions).values({
+      id,
+      userId: user.id,
+      currentStepId: ONBOARDING_STEP_IDS.STEP_WELCOME,
+      answersJson: {},
+      status: "in_progress",
+      version: ONBOARDING_VERSION,
+    })
+
+    const inserted = await db
+      .select()
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.id, id))
+      .limit(1)
+
+    const newRow = inserted[0]
+    if (!newRow) return null
+
+    return {
+      id: newRow.id,
+      userId: newRow.userId,
+      accountId: newRow.accountId,
+      currentStepId: newRow.currentStepId,
+      answers: normalizeAnswers(newRow.answersJson),
+      status: "in_progress",
+      version: newRow.version,
+      startedAt: newRow.startedAt,
+      updatedAt: newRow.updatedAt,
+      completedAt: newRow.completedAt,
+    }
+  } catch (err) {
+    if (isRedirectError(err)) throw err
+    console.error("[getOrCreateOnboardingSession]", err)
     return null
-  }
-
-  const id = randomUUID()
-  await db.insert(onboardingSessions).values({
-    id,
-    userId: user.id,
-    currentStepId: ONBOARDING_STEP_IDS.STEP_WELCOME,
-    answersJson: {},
-    status: "in_progress",
-    version: ONBOARDING_VERSION,
-  })
-
-  const inserted = await db
-    .select()
-    .from(onboardingSessions)
-    .where(eq(onboardingSessions.id, id))
-    .limit(1)
-
-  const newRow = inserted[0]
-  if (!newRow) return null
-
-  return {
-    id: newRow.id,
-    userId: newRow.userId,
-    accountId: newRow.accountId,
-    currentStepId: newRow.currentStepId,
-    answers: normalizeAnswers(newRow.answersJson),
-    status: "in_progress",
-    version: newRow.version,
-    startedAt: newRow.startedAt,
-    updatedAt: newRow.updatedAt,
-    completedAt: newRow.completedAt,
   }
 }
 
