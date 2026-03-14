@@ -6,13 +6,16 @@ This repository is the single-app implementation for the product defined in the 
 
 ## Current Status
 
-Phase 0 is in progress.
+**Build plan Phases 0–10 are implemented.** The app is ready for staging and Vercel deployment.
 
-Completed so far:
-- local git repository initialized
-- GitHub remote attached to `openvenueai/OpenVenueApp`
-- Next.js App Router app scaffolded with TypeScript, pnpm, Tailwind, and ESLint
-- baseline project folders and repo docs added
+Completed:
+- **Phases 0–4**: Repo bootstrap, platform tooling, Supabase + schema, auth/roles/onboarding, app shell and design system
+- **Phase 5**: Dashboard, Leads, Event Workspace shell and Overview tab
+- **Phase 6**: Notes, Messages, Activity, task-from-note, Tasks screen (CRUD), Calendar (month view), Inbox shell (thread list, detail, reply)
+- **Phase 7**: Proposal and Payments & Contract (proposals, proposal items, contracts, payment milestones)
+- **Phase 8**: Timeline Builder (timelines, timeline items), BEO (draft/content)
+- **Phase 9**: AI infrastructure (lib/ai, daily briefing, ai_runs/artifacts/summaries/suggestions schema)
+- **Phase 10**: Deployment docs (`docs/deployment.md`), migrations for commercial and AI tables
 
 ## Core References
 
@@ -23,6 +26,7 @@ Completed so far:
 
 ## Tech Direction
 
+- Node.js 20 LTS
 - Next.js App Router
 - TypeScript
 - pnpm
@@ -30,14 +34,21 @@ Completed so far:
 - Supabase
 - Drizzle ORM
 
-More dependencies will be added in Phase 1 and Phase 2 according to the build plan.
+For deployment to Vercel and environment setup, see **`docs/deployment.md`**.
 
 ## Getting Started
 
 Install dependencies:
 
 ```bash
+nvm use
 pnpm install
+```
+
+Verify the local Supabase configuration:
+
+```bash
+pnpm supabase:check
 ```
 
 Start the development server:
@@ -54,7 +65,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 pnpm dev
 pnpm lint
 pnpm typecheck
+pnpm test
+pnpm test:coverage
+pnpm test:e2e
 pnpm build
+pnpm db:generate
+pnpm db:push
+pnpm db:studio
 ```
 
 ## Project Structure
@@ -79,12 +96,4 @@ tests/        Automated test suites
 - Reuse structured data across Proposal, Timeline, Payments, BEO, Notes, Tasks, and Calendar.
 - Follow `BUILD_PLAN.md` instead of building modules out of sequence.
 
-## Next Step
-
-Move from Phase 0 into Phase 1:
-- add platform dependencies
-- configure Supabase and Drizzle
-- establish the first domain schema
-- prepare auth and tenancy foundations
-
-For the full sequence, use `BUILD_PLAN.md`.
+To get a live link, connect the repo to Vercel, set the required env vars (see `docs/deployment.md`), run database migrations, then deploy.

@@ -1,0 +1,115 @@
+import {
+  index,
+  integer,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core"
+import { accounts, profiles, venueSpaces, venues } from "./accounts"
+import {
+  addressColumns,
+  auditColumns,
+  contactTypeEnum,
+  eventTypeEnum,
+  idColumn,
+  metadataColumn,
+  tenantColumn,
+  timestampColumns,
+  venueColumn,
+  workspaceStageEnum,
+  workspaceStatusEnum,
+} from "./common"
+
+export const contacts = pgTable(
+  "contacts",
+  {
+    id: idColumn(),
+    accountId: tenantColumn().references(() => accounts.id, { onDelete: "cascade" }),
+    venueId: venueColumn().references(() => venues.id, { onDelete: "set null" }),
+    ownerProfileId: uuid("owner_profile_id").references(() => profiles.id, {
+      onDelete: "set null",
+    }),
+    contactType: contactTypeEnum("contact_type").default("lead").notNull(),
+    firstName: varchar("first_name", { length: 120 }),
+    lastName: varchar("last_name", { length: 120 }),
+    fullName: varchar("full_name", { length: 180 }).notNull(),
+    companyName: varchar("company_name", { length: 160 }),
+    email: varchar("email", { length: 255 }),
+    phone: varchar("phone", { length: 40 }),
+    eventType: eventTypeEnum("event_type"),
+    source: varchar("source", { length: 120 }),
+    leadStatus: varchar("lead_status", { length: 80 }),
+    notes: varchar("notes", { length: 500 }),
+    ...addressColumns(),
+    metadata: metadataColumn(),
+    ...timestampColumns(),
+    ...auditColumns(),
+  },
+  (table) => [
+    index("contacts_account_id_idx").on(table.accountId),
+    index("contacts_venue_id_idx").on(table.venueId),
+    index("contacts_owner_profile_id_idx").on(table.ownerProfileId),
+    index("contacts_email_idx").on(table.email),
+    index("contacts_event_type_idx").on(table.eventType),
+  ],
+)
+
+export const eventWorkspaces = pgTable(
+  "event_workspaces",
+  {
+    id: idColumn(),
+    accountId: tenantColumn().references(() => accounts.id, { onDelete: "cascade" }),
+    venueId: venueColumn().references(() => venues.id, { onDelete: "set null" }),
+    primarySpaceId: uuid("primary_space_id").references(() => venueSpaces.id, {
+      onDelete: "set null",
+    }),
+    primaryContactId: uuid("primary_contact_id").references(() => contacts.id, {
+      onDelete: "set null",
+    }),
+    ownerProfileId: uuid("owner_profile_id").references(() => profiles.id, {
+      onDelete: "set null",
+    }),
+    coordinatorProfileId: uuid("coordinator_profile_id").references(
+      () => profiles.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+    title: varchar("title", { length: 180 }).notNull(),
+    slug: varchar("slug", { length: 180 }).notNull(),
+    eventName: varchar("event_name", { length: 180 }),
+    eventType: eventTypeEnum("event_type").default("other").notNull(),
+    stage: workspaceStageEnum("stage").default("lead").notNull(),
+    status: workspaceStatusEnum("status").default("active").notNull(),
+    source: varchar("source", { length: 120 }),
+    guestCount: integer("guest_count"),
+    budgetMinCents: integer("budget_min_cents"),
+    budgetMaxCents: integer("budget_max_cents"),
+    preferredDate: timestamp("preferred_date", { withTimezone: true }),
+    eventStartAt: timestamp("event_start_at", { withTimezone: true }),
+    eventEndAt: timestamp("event_end_at", { withTimezone: true }),
+    bookedAt: timestamp("booked_at", { withTimezone: true }),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }),
+    nextActionDueAt: timestamp("next_action_due_at", { withTimezone: true }),
+    summary: varchar("summary", { length: 1000 }),
+    internalSummary: varchar("internal_summary", { length: 2000 }),
+    metadata: metadataColumn(),
+    ...timestampColumns(),
+    ...auditColumns(),
+  },
+  (table) => [
+    uniqueIndex("event_workspaces_account_slug_key").on(table.accountId, table.slug),
+    index("event_workspaces_account_id_idx").on(table.accountId),
+    index("event_workspaces_venue_id_idx").on(table.venueId),
+    index("event_workspaces_primary_contact_id_idx").on(table.primaryContactId),
+    index("event_workspaces_owner_profile_id_idx").on(table.ownerProfileId),
+    index("event_workspaces_coordinator_profile_id_idx").on(
+      table.coordinatorProfileId,
+    ),
+    index("event_workspaces_stage_idx").on(table.stage),
+    index("event_workspaces_status_idx").on(table.status),
+    index("event_workspaces_event_start_idx").on(table.eventStartAt),
+  ],
+)

@@ -1,0 +1,3 @@
+-- OpenVenue Supabase seed placeholder
+-- Canonical demo seed data currently lives in scripts/seed.ts.
+-- Keep this file lightweight until we add SQL-native local reset seeds.

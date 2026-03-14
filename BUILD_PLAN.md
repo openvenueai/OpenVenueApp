@@ -2,14 +2,16 @@
 
 ## Current Repo State
 
-This repository is currently at true project-start state:
+This plan started from true project-start state, but the repo has now advanced through the foundational phases:
 
-- only the planning/reference markdown files exist
-- there is no application scaffold yet
-- there is no git repository initialized yet
-- there is no package manager, config, schema, or environment setup yet
+- git and GitHub remote are connected
+- the Next.js app scaffold and project structure exist
+- core platform dependencies and testing tools are installed
+- Supabase, Drizzle, schema, migrations, and seed scaffolding are in place
+- auth, onboarding, setup, and dashboard foundation routes exist
+- Phase 4 shell work is underway with authenticated navigation and protected placeholder routes
 
-That means our plan should start from zero and follow the implementation order described in the reference docs.
+The phased order below still applies. We are now building on top of the completed foundation instead of starting from zero.
 
 ## Source of Truth
 

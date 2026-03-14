@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1773464035776,
+      "tag": "0000_clumsy_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773505292000,
+      "tag": "0001_skinny_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773505401122,
+      "tag": "0002_timeline_beo",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773505418698,
+      "tag": "0003_ai_tables",
+      "breakpoints": true
+    }
+  ]
+}

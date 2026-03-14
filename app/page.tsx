@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const principles = [
   "Event Workspace is the central record from lead through execution.",
   "AI is embedded as reviewable support, not a separate chat-first product.",
@@ -45,19 +47,19 @@ export default function Home() {
                 <span className="rounded-full border border-juniper/15 bg-juniper px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white">
                   OpenVenue
                 </span>
-                <span className="rounded-full border border-line bg-canvas px-3 py-1 text-xs font-medium text-muted">
-                  Phase 0 in progress
+                <span className="rounded-full border border-line bg-canvas px-3 py-1 text-xs font-medium text-juniper">
+                  Phase 3 in progress
                 </span>
               </div>
 
               <div className="space-y-4">
-                <p className="text-sm font-medium uppercase tracking-[0.28em] text-muted">
+                <p className="text-sm font-medium uppercase tracking-[0.28em] text-juniper">
                   AI-native CRM and event operations workspace
                 </p>
                 <h1 className="max-w-3xl font-display text-5xl leading-none tracking-tight text-juniper-strong sm:text-6xl">
                   Building the operating system for venues.
                 </h1>
-                <p className="max-w-2xl text-base leading-8 text-muted sm:text-lg">
+                <p className="max-w-2xl text-base leading-8 text-juniper sm:text-lg">
                   This repo now holds the first OpenVenue application scaffold,
                   the product reference library, and the execution plan we will
                   build against next.
@@ -66,7 +68,7 @@ export default function Home() {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-3xl border border-line bg-canvas px-4 py-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted">
+                  <p className="text-xs uppercase tracking-[0.2em] text-juniper">
                     Connected remote
                   </p>
                   <p className="mt-2 text-lg font-semibold text-juniper-strong">
@@ -74,21 +76,36 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="rounded-3xl border border-line bg-canvas px-4 py-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted">
+                  <p className="text-xs uppercase tracking-[0.2em] text-juniper">
                     Current milestone
                   </p>
                   <p className="mt-2 text-lg font-semibold text-juniper-strong">
-                    Platform Ready
+                    Auth and onboarding
                   </p>
                 </div>
                 <div className="rounded-3xl border border-line bg-canvas px-4 py-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted">
+                  <p className="text-xs uppercase tracking-[0.2em] text-juniper">
                     Next move
                   </p>
                   <p className="mt-2 text-lg font-semibold text-juniper-strong">
-                    Tooling and schema
+                    App shell and CRM core
                   </p>
                 </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  className="inline-flex items-center justify-center rounded-full bg-juniper px-5 py-3 text-sm font-semibold text-white transition hover:bg-juniper-strong"
+                  href="/sign-up"
+                >
+                  Create account
+                </Link>
+                <Link
+                  className="inline-flex items-center justify-center rounded-full border border-line bg-canvas px-5 py-3 text-sm font-semibold text-juniper-strong transition hover:border-juniper/35 hover:text-juniper"
+                  href="/sign-in"
+                >
+                  Sign in
+                </Link>
               </div>
             </div>
 
@@ -121,14 +138,14 @@ export default function Home() {
           <article className="rounded-[28px] border border-line bg-surface px-6 py-6 shadow-[0_18px_50px_rgba(28,43,38,0.06)] sm:px-7">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted">
+                <p className="text-sm font-medium uppercase tracking-[0.24em] text-juniper">
                   Build sequence
                 </p>
                 <h2 className="mt-2 font-display text-3xl text-juniper-strong">
                   First four phases
                 </h2>
               </div>
-              <span className="text-sm text-muted">Foundation before features</span>
+              <span className="text-sm text-juniper">Foundation before features</span>
             </div>
 
             <div className="mt-6 grid gap-4">
@@ -144,7 +161,7 @@ export default function Home() {
                     <h3 className="text-lg font-semibold text-juniper-strong">
                       {phase.title}
                     </h3>
-                    <p className="mt-1 text-sm leading-7 text-muted">
+                    <p className="mt-1 text-sm leading-7 text-juniper">
                       {phase.detail}
                     </p>
                   </div>
@@ -154,13 +171,13 @@ export default function Home() {
           </article>
 
           <aside className="rounded-[28px] border border-line bg-surface-muted/70 px-6 py-6">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted">
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-juniper">
               Working references
             </p>
             <h2 className="mt-2 font-display text-3xl text-juniper-strong">
               Repo guideposts
             </h2>
-            <p className="mt-3 text-sm leading-7 text-muted">
+            <p className="mt-3 text-sm leading-7 text-juniper">
               The docs below define product scope, implementation order, and the
               central event-workspace model we should preserve as we build.
             </p>
@@ -180,7 +197,7 @@ export default function Home() {
               <p className="text-xs uppercase tracking-[0.18em] text-warm-gold">
                 Build note
               </p>
-              <p className="mt-2 text-sm leading-7 text-muted">
+              <p className="mt-2 text-sm leading-7 text-juniper">
                 We are intentionally sequencing OpenVenue as foundation, tenancy,
                 shell, CRM core, commercial workflows, planning, then AI.
               </p>
